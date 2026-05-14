@@ -1,0 +1,46 @@
+# Arquivos/pastas EXCLUÍDOS do .vsix gerado por `vsce package`.
+# Sem este arquivo, o pacote engloba ferramentaria interna e fica gigante.
+
+# --- Ferramentas de desenvolvimento ---
+.github/**
+.gitignore
+.gitattributes
+publish.sh
+.vscode/**
+.vscode-test/**
+
+# --- Lixo de build / dependências ---
+node_modules/**
+*.log
+*.tgz
+.npmrc
+.npmignore
+yarn.lock
+package-lock.json
+
+# --- Pacotes anteriores (não embutir um .vsix dentro do .vsix) ---
+*.vsix
+
+# --- Arquivos de OS ---
+.DS_Store
+Thumbs.db
+
+# --- Tokens / segredos (proteção redundante — não devem estar aqui de qualquer jeito) ---
+.env
+.env.*
+*.pat
+*.token
+tokens.env
+secrets/**
+
+# --- Backup ---
+*.bak
+*.bak-*
+
+# --- Editores ---
+*.swp
+*.swo
+*~
+
+# --- Source maps (se um dia houver build) ---
+**/*.map

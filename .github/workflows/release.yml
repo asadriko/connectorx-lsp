@@ -1,0 +1,254 @@
+name: Release
+
+# Dispara quando uma tag começando com 'v' é pushada para o repo.
+#   git tag v2.0.1
+#   git push origin v2.0.1
+#
+# Requer 1 secret SEMPRE (Open VSX):
+#   - OVSX_PAT   (token Open VSX; ver extension-publish.md)
+#
+# Requer 1 secret OPCIONAL (Visual Studio Marketplace — Microsoft):
+#   - VSCE_PAT   (token Azure DevOps com escopo Marketplace)
+#
+# E uma repo variable para ligar publicação no Marketplace:
+#   gh variable set PUBLISH_MARKETPLACE --repo asadriko/connectorx-lsp --body "true"
+# Sem essa variável (ou se "false"), só publica no Open VSX.
+#
+# Como configurar:
+#   gh secret set OVSX_PAT --repo asadriko/connectorx-lsp     # prompta, cola no terminal
+#   gh secret set VSCE_PAT --repo asadriko/connectorx-lsp     # idem, opcional
+#   gh variable set PUBLISH_MARKETPLACE --repo asadriko/connectorx-lsp --body "true"  # opcional
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write   # para criar GitHub Release com o .vsix anexado
+
+jobs:
+  # ===========================================================================
+  # 1. Valida que a tag bate com a versão declarada e que os JSONs são válidos
+  # ===========================================================================
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.read-version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Read declared version
+        id: read-version
+        run: |
+          VER=$(node -p "require('./package.json').version")
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
+          echo "Declared in package.json: $VER"
+
+      - name: Compare tag with declared version
+        run: |
+          TAG_VER="${GITHUB_REF#refs/tags/v}"
+          PKG_VER="${{ steps.read-version.outputs.version }}"
+          if [ "$TAG_VER" != "$PKG_VER" ]; then
+            echo "::error::Tag v$TAG_VER não bate com package.json $PKG_VER. Bump a versão antes de taggear."
+            exit 1
+          fi
+
+      - name: Validate JSON (strict — package.json, snippets, syntax)
+        run: |
+          for f in package.json snippets/lsp.json syntaxes/lsp.tmLanguage.json; do
+            node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))" \
+              && echo "✓ $f (strict JSON)" \
+              || { echo "::error::$f inválido (JSON strict)"; exit 1; }
+          done
+
+      - name: Validate language-configuration.json (JSONC — comentários permitidos)
+        run: |
+          # language-configuration.json é JSONC por convenção VS Code; vsce aceita.
+          # Validamos via jsonc-parser.
+          npm install --no-save jsonc-parser >/dev/null 2>&1
+          node -e "
+            const { parse, printParseErrorCode } = require('jsonc-parser');
+            const fs = require('fs');
+            const errs = [];
+            parse(fs.readFileSync('language-configuration.json','utf8'), errs);
+            if (errs.length > 0) {
+              console.error('language-configuration.json inválido:', errs.map(e => printParseErrorCode(e.error)).join(', '));
+              process.exit(1);
+            }
+            console.log('✓ language-configuration.json (JSONC)');
+          "
+
+      - name: Check CHANGELOG entry exists for this version
+        run: |
+          VER="${{ steps.read-version.outputs.version }}"
+          if ! grep -qE "^##.*\b${VER}\b" CHANGELOG.md; then
+            echo "::warning::CHANGELOG.md não tem entrada para versão $VER. Recomendo adicionar antes do release."
+          fi
+
+      - name: Check icon present
+        run: |
+          test -f images/icon.png || { echo "::error::images/icon.png ausente"; exit 1; }
+          file images/icon.png | grep -q "PNG image data" || { echo "::error::icon.png não é PNG"; exit 1; }
+
+  # ===========================================================================
+  # 2. Empacota o .vsix
+  # ===========================================================================
+  package:
+    name: Package .vsix
+    runs-on: ubuntu-latest
+    needs: validate
+    outputs:
+      vsix-name: ${{ steps.pkg.outputs.vsix }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install vsce
+        run: npm install -g @vscode/vsce
+
+      - name: Package
+        id: pkg
+        run: |
+          vsce package --no-yarn
+          VSIX=$(ls *.vsix | tail -1)
+          echo "vsix=$VSIX" >> "$GITHUB_OUTPUT"
+          ls -la "$VSIX"
+
+      - name: Upload .vsix as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vsix-package
+          path: '*.vsix'
+          retention-days: 30
+
+  # ===========================================================================
+  # 3. Publica no Open VSX (sempre — atende Antigravity/Cursor/VSCodium/Theia)
+  # ===========================================================================
+  publish-openvsx:
+    name: Publish — Open VSX
+    runs-on: ubuntu-latest
+    needs: package
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install ovsx
+        run: npm install -g ovsx
+
+      - name: Download .vsix artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vsix-package
+
+      - name: Publish to Open VSX
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          if [ -z "$OVSX_PAT" ]; then
+            echo "::error::Secret OVSX_PAT não configurado. Rode: gh secret set OVSX_PAT --repo asadriko/connectorx-lsp"
+            exit 1
+          fi
+          VSIX=$(ls *.vsix | tail -1)
+          ovsx publish "$VSIX" -p "$OVSX_PAT"
+          echo "::notice::Publicado em https://open-vsx.org/extension/adrianoazevedo/connectorx-lsp"
+
+  # ===========================================================================
+  # 4. Publica no Visual Studio Marketplace (Microsoft) — OPCIONAL
+  #    Só roda se a repo variable PUBLISH_MARKETPLACE estiver setada como "true".
+  #    Para habilitar:
+  #      gh variable set PUBLISH_MARKETPLACE --repo asadriko/connectorx-lsp --body "true"
+  # ===========================================================================
+  publish-marketplace:
+    name: Publish — Visual Studio Marketplace
+    runs-on: ubuntu-latest
+    needs: package
+    if: ${{ vars.PUBLISH_MARKETPLACE == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install vsce
+        run: npm install -g @vscode/vsce
+
+      - name: Download .vsix artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vsix-package
+
+      - name: Publish to Visual Studio Marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if [ -z "$VSCE_PAT" ]; then
+            echo "::error::Secret VSCE_PAT não configurado. Rode: gh secret set VSCE_PAT --repo asadriko/connectorx-lsp"
+            exit 1
+          fi
+          VSIX=$(ls *.vsix | tail -1)
+          vsce publish --packagePath "$VSIX" -p "$VSCE_PAT"
+          echo "::notice::Publicado em https://marketplace.visualstudio.com/items?itemName=AdrianoAzevedo.connectorx-lsp"
+
+  # ===========================================================================
+  # 5. Cria GitHub Release com o .vsix anexado + notas do CHANGELOG
+  #    Roda mesmo se publish-marketplace foi pulado (depende só de publish-openvsx).
+  # ===========================================================================
+  github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [package, publish-openvsx]
+    if: always() && needs.publish-openvsx.result == 'success'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download .vsix artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vsix-package
+
+      - name: Extract release notes from CHANGELOG
+        id: notes
+        run: |
+          VER="${GITHUB_REF#refs/tags/v}"
+          # Pega o bloco entre "## [VER]" e a próxima "## " (não-greedy via awk)
+          awk -v ver="$VER" '
+            BEGIN { capture = 0 }
+            /^##[[:space:]]/ {
+              if (capture) exit
+              if (index($0, ver) > 0) { capture = 1; next }
+            }
+            capture { print }
+          ' CHANGELOG.md > release-notes.md
+          # Fallback se não encontrou
+          if [ ! -s release-notes.md ]; then
+            echo "Versão $VER — ver CHANGELOG.md no repo para detalhes." > release-notes.md
+          fi
+          echo "--- Release notes ---"
+          cat release-notes.md
+          echo "--- end ---"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: release-notes.md
+          files: '*.vsix'
+          name: ConnectorX LSP ${{ github.ref_name }}
+          draft: false
+          prerelease: false

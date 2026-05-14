@@ -1,0 +1,800 @@
+{
+  "inicio": {
+    "prefix": "inicio",
+    "body": [
+      "inicio",
+      "\t$2",
+      "fim;"
+    ],
+    "description": "bloco de comandos inicio - fim"
+  },
+  "inicio senao": {
+    "prefix": "inicio",
+    "body": [
+      "inicio",
+      "\t$2",
+      "fim",
+      "senao",
+      "inicio",
+      "\t$3",
+      "fim;"
+    ],
+    "description": "bloco de comandos inicio - fim com senão"
+  },
+  "para": {
+    "prefix": "para",
+    "body": [
+      "Para (${1:NI} = ${2:1}; ${1:NI} <= ${3:NMax}; ${1:NI}++)",
+      "Inicio",
+      "\t$0",
+      "Fim;"
+    ],
+    "description": "laço de repetição 'para' (estilo Sapiens — Inicio/Fim)"
+  },
+  "enquanto": {
+    "prefix": "enquanto",
+    "body": [
+      "Enquanto (${1:condicao})",
+      "Inicio",
+      "\t$0",
+      "Fim;"
+    ],
+    "description": "laço enquanto (while) — Inicio/Fim"
+  },
+  "definir funcao": {
+    "prefix": "definir funcao",
+    "body": [
+      "Definir Funcao ${1:MinhaFuncao} (${2:NUMERO p1, NUMERO end pResultado});",
+      "Funcao ${1:MinhaFuncao} (${2:NUMERO p1, NUMERO end pResultado});",
+      "Inicio",
+      "\t$0",
+      "Fim;"
+    ],
+    "description": "Declara e define função; use 'end' nos parâmetros de saída"
+  },
+  "se senao": {
+    "prefix": "se",
+    "body": [
+      "Se (${1:Condicao})",
+      "{",
+      "\t$2",
+      "}",
+      "Senao",
+      "{",
+      "\t$3",
+      "}"
+    ],
+    "description": "se / senao"
+  },
+  "se": {
+    "prefix": "se",
+    "body": [
+      "Se (${1:Condicao})",
+      "{",
+      "\t$0",
+      "}"
+    ],
+    "description": "se"
+  },
+  "definir alfa": {
+    "prefix": "definir alfa",
+    "body": [
+      "Definir Alfa ${1:AVar}${2:[100]};"
+    ],
+    "description": "Declara variável ALFA (string). [N] = tamanho opcional"
+  },
+  "definir numero": {
+    "prefix": "definir numero",
+    "body": [
+      "Definir Numero ${1:NVar};"
+    ],
+    "description": "Declara variável NUMERO (int ou decimal)"
+  },
+  "definir data": {
+    "prefix": "definir data",
+    "body": [
+      "Definir Data ${1:DVar};"
+    ],
+    "description": "Declara variável DATA (sem componente de hora; compare com 0 para 'não inicializada')"
+  },
+  "definir cursor": {
+    "prefix": "definir cursor",
+    "body": [
+      "Definir Cursor ${1:cCur};"
+    ],
+    "description": "Declara variável CURSOR (estilo OO — preferido em Rubi/HCM)"
+  },
+  "definir cursor alfa": {
+    "prefix": "definir cursor alfa",
+    "body": [
+      "Definir Alfa ${1:xCur};   /* handle de cursor SQL_* (estilo procedural, padrão em SSF) */"
+    ],
+    "description": "Declara handle de cursor procedural (Alfa) — usado por SQL_Criar/SQL_DefinirX/SQL_Destruir"
+  },
+  "definir tabela": {
+    "prefix": "definir tabela",
+    "body": [
+      "Definir Tabela ${1:tDados}[${2:10}] = {",
+      "\tAlfa   ${3:Nome}[50];",
+      "\tNumero ${4:Valor};",
+      "};"
+    ],
+    "description": "Declara TABELA em memória (array tipado multidimensional)"
+  },
+  "definir grid": {
+    "prefix": "definir grid",
+    "body": [
+      "Definir Grid ${1:gLista};"
+    ],
+    "description": "Declara variável GRID (grade — só telas SGI)"
+  },
+  "enter crlf": {
+    "prefix": "enter-crlf",
+    "body": [
+      "Definir Alfa AQUEBRA1, AQUEBRA2, ENTER;",
+      "RetornaAscII(13, AQUEBRA1);   /* CR */",
+      "RetornaAscII(10, AQUEBRA2);   /* LF */",
+      "ENTER = AQUEBRA1 + AQUEBRA2;"
+    ],
+    "description": "Define quebra de linha CRLF — necessária pra montar JSON legível em SSF"
+  },
+  "nok guard": {
+    "prefix": "nok-guard",
+    "body": [
+      "Se (NOK = 1)",
+      "{",
+      "\t$1",
+      "\tSe (${2:condicao_falha})",
+      "\t{",
+      "\t\tAERRO = \"${3:mensagem de erro}\";",
+      "\t\tNOK = 0;",
+      "\t}",
+      "}"
+    ],
+    "description": "Bloco SE (NOK = 1) — padrão para fluxo sem early-return (substitui 'return' que LSP não tem)"
+  },
+  "ssf skeleton": {
+    "prefix": "ssf-skeleton",
+    "body": [
+      "/*",
+      "  ${1:nome-do-webservice}.ssf",
+      "  ${2:Descrição da operação.}",
+      "",
+      "  ENTRADA  (jsonIn):",
+      "    { \"codemp\": <int>, \"codfil\": <int>, ... }",
+      "",
+      "  SAÍDA    (jsonOut):",
+      "    sucesso → { \"success\": true, ... }",
+      "    erro    → { \"success\": false, \"erro\": \"<msg>\" }",
+      "*/",
+      "",
+      "/* ------------------------ VARIÁVEIS ------------------------ */",
+      "",
+      "Definir Alfa   AJSONIN, ARETORNO, AERRO;",
+      "Definir Numero NCODEMP, NCODFIL, NOK, NERRSQL;",
+      "Definir Alfa   xCur, xQuery, AMSGERROSQL;",
+      "Definir Alfa   AQUEBRA1, AQUEBRA2, ENTER;",
+      "",
+      "RetornaAscII(13, AQUEBRA1);",
+      "RetornaAscII(10, AQUEBRA2);",
+      "ENTER       = AQUEBRA1 + AQUEBRA2;",
+      "NOK         = 1;",
+      "AERRO       = \"\";",
+      "NERRSQL     = 0;",
+      "AMSGERROSQL = \"\";",
+      "",
+      "/* ------------------------ 1. LÊ jsonIn ------------------------ */",
+      "",
+      "AJSONIN = ${3:setExemplo}.jsonIn;",
+      "Se (AJSONIN = \"\") { AERRO = \"parametro jsonIn vazio.\"; NOK = 0; }",
+      "",
+      "/* ------------------------ 2. EXTRAI CAMPOS via JSON_VALUE ------------------------ */",
+      "",
+      "Se (NOK = 1)",
+      "{",
+      "\txQuery = \"SELECT                                                                  \\\\",
+      "\t  CAST(ISNULL(JSON_VALUE(:xJsonIn, '$$.codemp'), 0) AS INT) AS CODEMP,             \\\\",
+      "\t  CAST(ISNULL(JSON_VALUE(:xJsonIn, '$$.codfil'), 0) AS INT) AS CODFIL\";",
+      "",
+      "\tSQL_Criar(xCur);",
+      "\tSQL_UsarAbrangencia(xCur, 0);",
+      "\tSQL_UsarSQLSenior2(xCur, 0);",
+      "\tSQL_DefinirComando(xCur, xQuery);",
+      "\tSQL_DefinirAlfa(xCur, \"xJsonIn\", AJSONIN);",
+      "\tSQL_AbrirCursor(xCur);",
+      "",
+      "\tSe (SQL_EOF(xCur) = 0)",
+      "\t{",
+      "\t\tSQL_RetornarInteiro(xCur, \"CODEMP\", NCODEMP);",
+      "\t\tSQL_RetornarInteiro(xCur, \"CODFIL\", NCODFIL);",
+      "\t}",
+      "\tSenao { AERRO = \"falha ao extrair JSON.\"; NOK = 0; }",
+      "",
+      "\tSQL_FecharCursor(xCur);",
+      "\tSQL_Destruir(xCur);",
+      "}",
+      "",
+      "/* ------------------------ 3. VALIDAÇÃO ------------------------ */",
+      "",
+      "Se (NOK = 1) { Se (NCODEMP = 0) { AERRO = \"codemp obrigatorio.\"; NOK = 0; } }",
+      "Se (NOK = 1) { Se (NCODFIL = 0) { AERRO = \"codfil obrigatorio.\"; NOK = 0; } }",
+      "",
+      "/* ------------------------ 4. LÓGICA ------------------------ */",
+      "",
+      "Se (NOK = 1)",
+      "{",
+      "\t$0",
+      "}",
+      "",
+      "/* ------------------------ 5. RETORNO ------------------------ */",
+      "",
+      "Se (NOK = 0)",
+      "{",
+      "\tSubstAlfa(\"\\\\\\\\\", \"\\\\\\\\\\\\\\\\\", AERRO);",
+      "\tSubstAlfa(\"\\\"\", \"\\\\\\\"\", AERRO);",
+      "\tSubstAlfa(AQUEBRA1, \"\\\\r\", AERRO);",
+      "\tSubstAlfa(AQUEBRA2, \"\\\\n\", AERRO);",
+      "",
+      "\tARETORNO = \"{\" + ENTER",
+      "\t         + \"  \\\"success\\\": false,\" + ENTER",
+      "\t         + \"  \\\"erro\\\": \\\"\" + AERRO + \"\\\"\" + ENTER",
+      "\t         + \"}\";",
+      "}",
+      "Senao",
+      "{",
+      "\tARETORNO = \"{\" + ENTER",
+      "\t         + \"  \\\"success\\\": true\" + ENTER",
+      "\t         + \"}\";",
+      "}",
+      "${3:setExemplo}.jsonOut = ARETORNO;"
+    ],
+    "description": "SSF webservice — skeleton completo (DEFINIR + ENTER + NOK + LÊ jsonIn + JSON_VALUE + VALIDA + LÓGICA + jsonOut)"
+  },
+  "transacao": {
+    "prefix": "transacao",
+    "body": [
+      "IniciarTransacao();",
+      "$0",
+      "Se (NERRSQL <> 0)",
+      "{",
+      "\tDesfazerTransacao();   /* rollback */",
+      "\tAERRO = AMSGERROSQL;",
+      "\tNOK = 0;",
+      "}",
+      "Senao",
+      "{",
+      "\tFinalizarTransacao();   /* commit */",
+      "}"
+    ],
+    "description": "Bloco transacional: IniciarTransacao → DML → commit/rollback baseado em NERRSQL"
+  },
+  "escape json": {
+    "prefix": "escape-json",
+    "body": [
+      "SubstAlfa(\"\\\\\\\\\", \"\\\\\\\\\\\\\\\\\", ${1:AERRO});    /* backslash PRIMEIRO!     */",
+      "SubstAlfa(\"\\\"\", \"\\\\\\\"\", ${1:AERRO});    /* aspas duplas            */",
+      "SubstAlfa(AQUEBRA1, \"\\\\r\", ${1:AERRO});    /* CR                      */",
+      "SubstAlfa(AQUEBRA2, \"\\\\n\", ${1:AERRO});    /* LF                      */"
+    ],
+    "description": "Escape canônico para colar string em JSON. Ordem importa: \\\\ antes de \\\"."
+  },
+  "return json ok": {
+    "prefix": "return-json-ok",
+    "body": [
+      "ARETORNO = \"{\" + ENTER",
+      "         + \"  \\\"success\\\": true,\" + ENTER",
+      "         + \"  \\\"${1:campo}\\\": \\\"\" + ${2:AVALOR} + \"\\\"\" + ENTER",
+      "         + \"}\";",
+      "${3:setExemplo}.jsonOut = ARETORNO;"
+    ],
+    "description": "Monta jsonOut de sucesso e atribui ao port WS"
+  },
+  "return json erro": {
+    "prefix": "return-json-erro",
+    "body": [
+      "SubstAlfa(\"\\\\\\\\\", \"\\\\\\\\\\\\\\\\\", AERRO);",
+      "SubstAlfa(\"\\\"\", \"\\\\\\\"\", AERRO);",
+      "SubstAlfa(AQUEBRA1, \"\\\\r\", AERRO);",
+      "SubstAlfa(AQUEBRA2, \"\\\\n\", AERRO);",
+      "ARETORNO = \"{\" + ENTER",
+      "         + \"  \\\"success\\\": false,\" + ENTER",
+      "         + \"  \\\"erro\\\": \\\"\" + AERRO + \"\\\"\" + ENTER",
+      "         + \"}\";",
+      "${1:setExemplo}.jsonOut = ARETORNO;"
+    ],
+    "description": "Monta jsonOut de erro (escapa AERRO + atribui ao port WS)"
+  },
+  "json value extract": {
+    "prefix": "json-value-extract",
+    "body": [
+      "xQuery = \"SELECT                                                                       \\\\",
+      "  CAST(ISNULL(JSON_VALUE(:xJsonIn, '$$.${1:codemp}'), 0)    AS INT)            AS ${1/(.*)/${1:/upcase}/},   \\\\",
+      "  CAST(ISNULL(JSON_VALUE(:xJsonIn, '$$.${2:descricao}'), '') AS NVARCHAR(4000)) AS ${2/(.*)/${1:/upcase}/}, \\\\",
+      "  TRY_CAST(JSON_VALUE(:xJsonIn, '$$.${3:data}')              AS DATETIME)       AS ${3/(.*)/${1:/upcase}/}, \\\\",
+      "  CAST(ISNULL(JSON_VALUE(:xJsonIn, '$$.${4:valor}'), 0)      AS NUMERIC(10,2))  AS ${4/(.*)/${1:/upcase}/}\";",
+      "",
+      "SQL_Criar(xCur);",
+      "SQL_UsarAbrangencia(xCur, 0);",
+      "SQL_UsarSQLSenior2(xCur, 0);",
+      "SQL_DefinirComando(xCur, xQuery);",
+      "SQL_DefinirAlfa(xCur, \"xJsonIn\", AJSONIN);",
+      "SQL_AbrirCursor(xCur);",
+      "",
+      "Se (SQL_EOF(xCur) = 0)",
+      "{",
+      "\tSQL_RetornarInteiro   (xCur, \"${1/(.*)/${1:/upcase}/}\",   N${1/(.*)/${1:/upcase}/});",
+      "\tSQL_RetornarAlfa      (xCur, \"${2/(.*)/${1:/upcase}/}\",   A${2/(.*)/${1:/upcase}/});",
+      "\tSQL_RetornarData      (xCur, \"${3/(.*)/${1:/upcase}/}\",   D${3/(.*)/${1:/upcase}/});",
+      "\tSQL_RetornarFlutuante (xCur, \"${4/(.*)/${1:/upcase}/}\",   N${4/(.*)/${1:/upcase}/});",
+      "}",
+      "Senao { AERRO = \"falha ao extrair JSON.\"; NOK = 0; }",
+      "",
+      "SQL_FecharCursor(xCur);",
+      "SQL_Destruir(xCur);"
+    ],
+    "description": "Cursor com JSON_VALUE: extrai 4 campos (int, alfa, data, flutuante) do AJSONIN para variáveis LSP"
+  },
+  "SQL_Criar completo": {
+    "prefix": "SQL_Criar",
+    "body": [
+      "SQL_Criar(${1:xCur});",
+      "SQL_UsarAbrangencia(${1:xCur}, 0);",
+      "SQL_UsarSQLSenior2(${1:xCur}, 0);",
+      "SQL_DefinirComando(${1:xCur}, ${2:xQuery});",
+      "SQL_DefinirInteiro(${1:xCur}, \"${3:bindNum}\", ${4:NVar});",
+      "SQL_DefinirAlfa   (${1:xCur}, \"${5:bindAlf}\", ${6:AVar});",
+      "SQL_AbrirCursor(${1:xCur});",
+      "Enquanto (SQL_EOF(${1:xCur}) = 0)",
+      "Inicio",
+      "\t$0",
+      "\tSQL_RetornarInteiro(${1:xCur}, \"${7:COLUNA}\", ${8:NRet});",
+      "\tSQL_RetornarAlfa   (${1:xCur}, \"${9:COLUNAS}\", ${10:ARet});",
+      "\tSQL_Proximo(${1:xCur});",
+      "Fim;",
+      "SQL_FecharCursor(${1:xCur});",
+      "SQL_Destruir(${1:xCur});"
+    ],
+    "description": "SQL_Criar: cursor completo com abrangência 0, SQLSenior2 0, binds, loop com SQL_EOF=0 e cleanup"
+  },
+  "SQL_Criar": {
+    "prefix": "SQL_Criar",
+    "body": [
+      "SQL_Criar(${1:xCur});",
+      "SQL_UsarAbrangencia(${1:xCur}, 0);",
+      "SQL_UsarSQLSenior2(${1:xCur}, 0);"
+    ],
+    "description": "SQL_Criar(Cursor) — abertura básica já com abrangência e SQLSenior2 desligados (canônico para SSF)"
+  },
+  "SQL_DefinirInteiro": {
+    "prefix": "SQL_DefinirInteiro",
+    "body": [
+      "SQL_DefinirInteiro(${1:xCur}, \"${2:bindName}\", ${3:NVar});"
+    ],
+    "description": "SQL_DefinirInteiro(Cursor, \"bind\", Variavel) — bind INT (sem ':' no nome)"
+  },
+  "SQL_DefinirAlfa": {
+    "prefix": "SQL_DefinirAlfa",
+    "body": [
+      "SQL_DefinirAlfa(${1:xCur}, \"${2:bindName}\", ${3:AVar});"
+    ],
+    "description": "SQL_DefinirAlfa(Cursor, \"bind\", Variavel) — bind string"
+  },
+  "SQL_DefinirData": {
+    "prefix": "SQL_DefinirData",
+    "body": [
+      "SQL_DefinirData(${1:xCur}, \"${2:bindName}\", ${3:DVar});"
+    ],
+    "description": "SQL_DefinirData(Cursor, \"bind\", Variavel) — bind DATA"
+  },
+  "SQL_DefinirFlutuante": {
+    "prefix": "SQL_DefinirFlutuante",
+    "body": [
+      "SQL_DefinirFlutuante(${1:xCur}, \"${2:bindName}\", ${3:NVar});"
+    ],
+    "description": "SQL_DefinirFlutuante(Cursor, \"bind\", Variavel) — bind NUMERIC com decimais"
+  },
+  "SQL_DefinirComando": {
+    "prefix": "SQL_DefinirComando",
+    "body": [
+      "SQL_DefinirComando(${1:xCur}, ${2:xQuery});"
+    ],
+    "description": "SQL_DefinirComando(Cursor, query) — atribui o SQL ao cursor"
+  },
+  "SQL_AbrirCursor se": {
+    "prefix": "SQL_AbrirCursor",
+    "body": [
+      "SQL_AbrirCursor(${1:xCur});",
+      "Se (SQL_EOF(${1:xCur}) = 0)",
+      "{",
+      "\t$0",
+      "}",
+      "SQL_FecharCursor(${1:xCur});",
+      "SQL_Destruir(${1:xCur});"
+    ],
+    "description": "SQL_AbrirCursor: abre, lê só a primeira linha (Se SQL_EOF=0), fecha e destrói"
+  },
+  "SQL_AbrirCursor enquanto": {
+    "prefix": "SQL_AbrirCursor",
+    "body": [
+      "SQL_AbrirCursor(${1:xCur});",
+      "Enquanto (SQL_EOF(${1:xCur}) = 0)",
+      "Inicio",
+      "\t$0",
+      "\tSQL_Proximo(${1:xCur});",
+      "Fim;",
+      "SQL_FecharCursor(${1:xCur});",
+      "SQL_Destruir(${1:xCur});"
+    ],
+    "description": "SQL_AbrirCursor: abre e itera com Enquanto SQL_EOF=0, fechando ao final"
+  },
+  "SQL_AbrirCursor": {
+    "prefix": "SQL_AbrirCursor",
+    "body": [
+      "SQL_AbrirCursor(${1:xCur});"
+    ],
+    "description": "SQL_AbrirCursor: abre o cursor (também dispara DML se a query for UPDATE/INSERT/DELETE)"
+  },
+  "SQL_EOF se": {
+    "prefix": "Se (SQL_EOF",
+    "body": [
+      "Se (SQL_EOF(${1:xCur}) = 0)",
+      "{",
+      "\t$0",
+      "}"
+    ],
+    "description": "SQL_EOF: retorna 0 se há linha; 1 se chegou ao fim (lógica contraintuitiva — leia 'EOF=0 = tem dado')"
+  },
+  "SQL_EOF enquanto": {
+    "prefix": "Enquanto (SQL_EOF",
+    "body": [
+      "Enquanto (SQL_EOF(${1:xCur}) = 0)",
+      "Inicio",
+      "\t$0",
+      "\tSQL_Proximo(${1:xCur});",
+      "Fim;"
+    ],
+    "description": "Iteração canônica do cursor procedural — sempre lembre de SQL_Proximo dentro do loop"
+  },
+  "SQL_RetornarInteiro": {
+    "prefix": "SQL_RetornarInteiro",
+    "body": [
+      "SQL_RetornarInteiro(${1:xCur}, \"${2:COLUNA}\", ${3:NRet});"
+    ],
+    "description": "SQL_RetornarInteiro(Cursor, \"COLUNA_ou_alias\", Variavel) — use alias EXATO do SELECT"
+  },
+  "SQL_RetornarAlfa": {
+    "prefix": "SQL_RetornarAlfa",
+    "body": [
+      "SQL_RetornarAlfa(${1:xCur}, \"${2:COLUNA}\", ${3:ARet});"
+    ],
+    "description": "SQL_RetornarAlfa(Cursor, \"COLUNA_ou_alias\", Variavel)"
+  },
+  "SQL_RetornarData": {
+    "prefix": "SQL_RetornarData",
+    "body": [
+      "SQL_RetornarData(${1:xCur}, \"${2:COLUNA}\", ${3:DRet});"
+    ],
+    "description": "SQL_RetornarData(Cursor, \"COLUNA_ou_alias\", Variavel)"
+  },
+  "SQL_RetornarFlutuante": {
+    "prefix": "SQL_RetornarFlutuante",
+    "body": [
+      "SQL_RetornarFlutuante(${1:xCur}, \"${2:COLUNA}\", ${3:NRet});"
+    ],
+    "description": "SQL_RetornarFlutuante(Cursor, \"COLUNA_ou_alias\", Variavel)"
+  },
+  "SQL_Proximo": {
+    "prefix": "SQL_Proximo",
+    "body": [
+      "SQL_Proximo(${1:xCur});"
+    ],
+    "description": "SQL_Proximo(Cursor): avança para o próximo registro"
+  },
+  "SQL_FecharCursor": {
+    "prefix": "SQL_FecharCursor",
+    "body": [
+      "SQL_FecharCursor(${1:xCur});",
+      "SQL_Destruir(${1:xCur});"
+    ],
+    "description": "SQL_FecharCursor + SQL_Destruir (sempre em par)"
+  },
+  "SQL_Destruir": {
+    "prefix": "SQL_Destruir",
+    "body": [
+      "SQL_Destruir(${1:xCur});"
+    ],
+    "description": "SQL_Destruir(Cursor): libera o handle do cursor"
+  },
+  "cursor oo": {
+    "prefix": "cursor-oo",
+    "body": [
+      "Definir Cursor ${1:cCur};",
+      "${1:cCur}.SQL \"SELECT ${2:campos} FROM ${3:tabela} WHERE ${4:condicao}\";",
+      "${1:cCur}.AbrirCursor();",
+      "Se (${1:cCur}.Achou)",
+      "Inicio",
+      "\t$0",
+      "Fim;",
+      "${1:cCur}.FecharCursor();"
+    ],
+    "description": "Cursor estilo OO (Rubi/HCM): SELECT + AbrirCursor + leitura via .Achou"
+  },
+  "cursor oo loop": {
+    "prefix": "cursor-oo-loop",
+    "body": [
+      "Definir Cursor ${1:cCur};",
+      "${1:cCur}.SQL \"SELECT ${2:campos} FROM ${3:tabela} WHERE ${4:condicao}\";",
+      "${1:cCur}.AbrirCursor();",
+      "Enquanto (${1:cCur}.Achou)",
+      "Inicio",
+      "\t$0",
+      "\t${1:cCur}.Proximo();",
+      "Fim;",
+      "${1:cCur}.FecharCursor();"
+    ],
+    "description": "Cursor estilo OO com loop — padrão idiomático em Rubi/HCM"
+  },
+  "ExecSQL insert": {
+    "prefix": "ExecSQL",
+    "body": [
+      "ExecSql \"INSERT INTO ${1:Tabela} (${2:Campos}) VALUES (:${3:Variaveis})\";"
+    ],
+    "description": "ExecSQL (legado, sem tratamento de erro): INSERT — preferir EXECSQLEX"
+  },
+  "ExecSQL update": {
+    "prefix": "ExecSQL",
+    "body": [
+      "ExecSql \"UPDATE ${1:Tabela} SET ${2:Campo} = :${3:Variavel} WHERE ${4:Condicao}\";"
+    ],
+    "description": "ExecSQL (legado): UPDATE — preferir EXECSQLEX"
+  },
+  "ExecSQL delete": {
+    "prefix": "ExecSQL",
+    "body": [
+      "ExecSql \"DELETE FROM ${1:Tabela} WHERE ${2:Condicao}\";"
+    ],
+    "description": "ExecSQL (legado): DELETE — preferir EXECSQLEX"
+  },
+  "ExecSQLEx insert": {
+    "prefix": "ExecSQLEx",
+    "body": [
+      "ExecSqlEx (\"INSERT INTO ${1:Tabela} (${2:Campos}) VALUES (:${3:Variaveis})\", NERRSQL, AMSGERROSQL);",
+      "Se (NERRSQL <> 0) { AERRO = AMSGERROSQL; NOK = 0; }"
+    ],
+    "description": "EXECSQLEX INSERT com tratamento de erro (NERRSQL/AMSGERROSQL/NOK)"
+  },
+  "ExecSQLEx update": {
+    "prefix": "ExecSQLEx",
+    "body": [
+      "ExecSqlEx (\"UPDATE ${1:Tabela} SET ${2:Campo} = :${3:Variavel} WHERE ${4:Condicao}\", NERRSQL, AMSGERROSQL);",
+      "Se (NERRSQL <> 0) { AERRO = AMSGERROSQL; NOK = 0; }"
+    ],
+    "description": "EXECSQLEX UPDATE com tratamento de erro. Lembre: NÃO aceita subquery nem função SQL Server."
+  },
+  "ExecSQLEx delete": {
+    "prefix": "ExecSQLEx",
+    "body": [
+      "ExecSqlEx (\"DELETE FROM ${1:Tabela} WHERE ${2:Condicao}\", NERRSQL, AMSGERROSQL);",
+      "Se (NERRSQL <> 0) { AERRO = AMSGERROSQL; NOK = 0; }"
+    ],
+    "description": "EXECSQLEX DELETE com tratamento de erro"
+  },
+  "GeraLog": {
+    "prefix": "GeraLog",
+    "body": [
+      "GeraLog(\"${1:Mensagem de log}\");"
+    ],
+    "description": "GeraLog(\"texto\"): grava no log de processo automático"
+  },
+  "Mensagem erro": {
+    "prefix": "Mensagem",
+    "body": [
+      "Mensagem(Erro, \"${1:CGC inválido.}\");   /* interrompe a transação em CodOpe=AntesX */"
+    ],
+    "description": "Mensagem(Erro, ...) — exibe ao usuário e cancela INSERT/UPDATE quando dentro de evento AntesX da tela SGI"
+  },
+  "Mensagem aviso": {
+    "prefix": "Mensagem",
+    "body": [
+      "Mensagem(Aviso, \"${1:atenção}\");"
+    ],
+    "description": "Mensagem(Aviso, ...) — só exibe, não cancela"
+  },
+  "Mensagem pergunta": {
+    "prefix": "Mensagem",
+    "body": [
+      "Mensagem(Retorna, \"${1:Deseja continuar?[&Sim,&Não]}\");",
+      "Se (ValRet = 1)",
+      "{",
+      "\t$0",
+      "}"
+    ],
+    "description": "Mensagem(Retorna, ...) — pergunta SIM/NÃO; retorno em ValRet (1 ou 2)"
+  },
+  "convertemascara data": {
+    "prefix": "ConverteMascara",
+    "body": [
+      "ConverteMascara(3, ${1:DData}, ${2:AData}, \"YYYY-MM-DD\");"
+    ],
+    "description": "ConverteMascara tipo=3 (Data) → string ISO. Padrão canônico em SSF."
+  },
+  "convertemascara dinheiro": {
+    "prefix": "ConverteMascara",
+    "body": [
+      "ConverteMascara(2, ${1:NValor}, ${2:AValor}, \"R$ ###.##0,00\");"
+    ],
+    "description": "ConverteMascara tipo=2 (Dinheiro) — formata para string"
+  },
+  "convertemascara cpf": {
+    "prefix": "ConverteMascara",
+    "body": [
+      "ConverteMascara(1, ${1:NCpf}, ${2:ACpf}, \"999.999.999-99\");"
+    ],
+    "description": "ConverteMascara tipo=1 (Número/CPF) — formata para string com pontuação"
+  },
+  "convertemascara cnpj": {
+    "prefix": "ConverteMascara",
+    "body": [
+      "ConverteMascara(1, ${1:NCnpj}, ${2:ACnpj}, \"99.999.999/9999-99\");"
+    ],
+    "description": "ConverteMascara tipo=1 (Número/CNPJ) — formata para string com pontuação"
+  },
+  "substalfa": {
+    "prefix": "SubstAlfa",
+    "body": [
+      "SubstAlfa(\"${1:busca}\", \"${2:troca}\", ${3:AVar});"
+    ],
+    "description": "SubstAlfa(busca, troca, ALFA) — replace ALL in-place"
+  },
+  "limpaespacos": {
+    "prefix": "LimpaEspacos",
+    "body": [
+      "LimpaEspacos(${1:AVar});"
+    ],
+    "description": "LimpaEspacos(ALFA) — trim ambos os lados, in-place"
+  },
+  "tamanhoalfa": {
+    "prefix": "TamanhoAlfa",
+    "body": [
+      "TamanhoAlfa(${1:AVar}, ${2:NTam});"
+    ],
+    "description": "TamanhoAlfa(ALFA, NUM_OUT) — comprimento da string"
+  },
+  "intparalafa": {
+    "prefix": "IntParaAlfa",
+    "body": [
+      "IntParaAlfa(${1:NValor}, ${2:AValor});"
+    ],
+    "description": "IntParaAlfa(NUM, ALFA_OUT) — number → string (limite 15 chars)"
+  },
+  "alfaparaint": {
+    "prefix": "AlfaParaInt",
+    "body": [
+      "AlfaParaInt(${1:AValor}, ${2:NValor});"
+    ],
+    "description": "AlfaParaInt(ALFA, NUM_OUT) — string → number"
+  },
+  "datahora": {
+    "prefix": "DataHora",
+    "body": [
+      "DataHora(${1:DAgora});"
+    ],
+    "description": "DataHora(DATA_OUT) — data+hora correntes (útil pra calcular HHMMSS, ver snippet 'hhmmss')"
+  },
+  "codope antesalterar": {
+    "prefix": "codope",
+    "body": [
+      "Se (CodOpe = \"AntesAlterar\")",
+      "{",
+      "\tSe (${1:condicao_invalida})",
+      "\t{",
+      "\t\tMensagem(Erro, \"${2:mensagem}\");",
+      "\t}",
+      "\t$0",
+      "}"
+    ],
+    "description": "Tela SGI: evento AntesAlterar — dispara antes do UPDATE; Mensagem(Erro,...) cancela"
+  },
+  "codope antesinserir": {
+    "prefix": "codope",
+    "body": [
+      "Se (CodOpe = \"AntesInserir\")",
+      "{",
+      "\tSe (${1:condicao_invalida})",
+      "\t{",
+      "\t\tMensagem(Erro, \"${2:mensagem}\");",
+      "\t}",
+      "\t$0",
+      "}"
+    ],
+    "description": "Tela SGI: evento AntesInserir — dispara antes do INSERT"
+  },
+  "codope inicializacao": {
+    "prefix": "codope",
+    "body": [
+      "Se (CodOpe = \"Inicializacao\")",
+      "{",
+      "\t/* setar defaults da tela */",
+      "\t$0",
+      "}"
+    ],
+    "description": "Tela SGI: evento Inicializacao — ao abrir a tela; usar para definir defaults"
+  },
+  "hhmmss decimal": {
+    "prefix": "hhmmss",
+    "body": [
+      "/* Calcula hora atual no formato HHMMSS decimal (Sapiens — ex: USU_HorAlt = 184530) */",
+      "Definir Data   DDATCOM;",
+      "Definir Numero NPARTE, NHTD, NHORA, NMINUTO, NSEGUNDO, NMTD, NSTD, NHORALT;",
+      "",
+      "DataHora(DDATCOM);",
+      "NPARTE   = DDATCOM - Truncar(DDATCOM);",
+      "NHTD     = NPARTE * 24;",
+      "NHORA    = Truncar(NHTD);",
+      "NMTD     = (NHTD - NHORA) * 60;",
+      "NMINUTO  = Truncar(NMTD);",
+      "NSTD     = (NMTD - NMINUTO) * 60;",
+      "NSEGUNDO = Truncar(NSTD);",
+      "NHORALT  = (NHORA * 10000) + (NMINUTO * 100) + NSEGUNDO;"
+    ],
+    "description": "Calcula hora atual em HHMMSS decimal (padrão Sapiens — USU_HorAlt)"
+  },
+  "cruza meia-noite": {
+    "prefix": "cruza-meia-noite",
+    "body": [
+      "NDIFMIN = ${1:NHORFIM} - ${2:NHORINI};",
+      "Se (NDIFMIN < 0) { NDIFMIN = NDIFMIN + 1440; }   /* atividade cruzou 00:00 */"
+    ],
+    "description": "Trata diferença de horário em minutos quando cruza meia-noite (1440 = 24*60)"
+  },
+  "auditoria": {
+    "prefix": "auditoria",
+    "body": [
+      "ExecSqlEx (\"INSERT INTO ${1:USU_LOG} (CodUsu, NomUsu, DatSis, HorSis, CodEmp, CodFil, Acao)        \\\\",
+      "                                VALUES (:CodUsu, :NomUsu, :DatSis, :HorSis, :CodEmp, :CodFil, :${2:AAcao})\",",
+      "             NERRSQL, AMSGERROSQL);",
+      "Se (NERRSQL <> 0) { AERRO = AMSGERROSQL; NOK = 0; }"
+    ],
+    "description": "Auditoria: grava log com variáveis de sistema (CodUsu/NomUsu/DatSis/HorSis/CodEmp/CodFil) via EXECSQLEX"
+  },
+  "cabecalho doc": {
+    "prefix": "cabecalho-doc",
+    "body": [
+      "/*",
+      "  ${1:nome-do-arquivo}.ssf",
+      "  ${2:Descrição da operação.}",
+      "",
+      "  ENTRADA  (jsonIn):",
+      "    {",
+      "      \"codemp\": <int>,    @ código da empresa @",
+      "      \"codfil\": <int>,    @ código da filial @",
+      "      \"numped\": <int>     @ número do pedido @",
+      "    }",
+      "",
+      "  SAÍDA    (jsonOut):",
+      "    sucesso → { \"success\": true, ... }",
+      "    erro    → { \"success\": false, \"erro\": \"<msg>\" }",
+      "",
+      "  NOTA: este bloco usa /* ... */; comentários internos com @ ... @ para não",
+      "  fechar acidentalmente o bloco externo (LSP não suporta /* */ aninhados).",
+      "*/"
+    ],
+    "description": "Cabeçalho de documentação canônico de SSF — usa @ @ internos para evitar a armadilha do /* */ aninhado"
+  },
+  "iniciar-bind-set": {
+    "prefix": "definir-binds-padrao",
+    "body": [
+      "SQL_DefinirInteiro(${1:xCur}, \"xCodEmp\", NCODEMP);",
+      "SQL_DefinirInteiro(${1:xCur}, \"xCodFil\", NCODFIL);",
+      "SQL_DefinirInteiro(${1:xCur}, \"xNumPed\", NNUMPED);"
+    ],
+    "description": "Binds canônicos CodEmp/CodFil/NumPed para cursor — atalho frequente em SSF do WebDAG"
+  },
+  "where-padrao": {
+    "prefix": "where-codemp-codfil",
+    "body": [
+      "WHERE CODEMP = :xCodEmp AND CODFIL = :xCodFil$0"
+    ],
+    "description": "WHERE canônico que sempre filtra por empresa/filial (use sempre com SQL_UsarAbrangencia(0))"
+  }
+}

@@ -1,0 +1,76 @@
+{
+	"name": "connectorx-lsp",
+	"displayName": "ConnectorX LSP",
+	"version": "2.0.0",
+	"publisher": "AdrianoAzevedo",
+	"author": {
+		"name": "Adriano Azevedo",
+		"email": "asadriko@gmail.com"
+	},
+	"description": "ConnectorX LSP — suporte completo à Linguagem Senior de Programação (LSP / Rubi): syntax highlighting, gramática SQL embutida em cursores, snippets canônicos para SSF/JSON_VALUE/EXECSQLEX/SQL_*, language-configuration. Fork estendido de killer.lsp (Rodrigo Sanguanini), enriquecido a partir da skill /senior-lsp.",
+	"engines": {
+		"vscode": "^1.77.0"
+	},
+	"categories": [
+		"Programming Languages",
+		"Snippets",
+		"Formatters",
+		"Other"
+	],
+	"keywords": [
+		"lsp",
+		"senior",
+		"rubi",
+		"sapiens",
+		"hcm",
+		"erp",
+		"ssf",
+		"connectorx",
+		"formatter"
+	],
+	"icon": "images/icon.png",
+	"license": "MIT",
+	"homepage": "https://github.com/asadriko/connectorx-lsp",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/asadriko/connectorx-lsp.git"
+	},
+	"bugs": {
+		"url": "https://github.com/asadriko/connectorx-lsp/issues"
+	},
+	"contributes": {
+		"languages": [
+			{
+				"id": "lsp",
+				"extensions": [
+					".lsp",
+					".ssf"
+				],
+				"aliases": [
+					"lsp",
+					"Linguagem Senior de Programação",
+					"Senior LSP",
+					"Rubi",
+					"ConnectorX LSP"
+				],
+				"configuration": "./language-configuration.json"
+			}
+		],
+		"snippets": [
+			{
+				"language": "lsp",
+				"path": "./snippets/lsp.json"
+			}
+		],
+		"grammars": [
+			{
+				"language": "lsp",
+				"scopeName": "source.lsp",
+				"path": "./syntaxes/lsp.tmLanguage.json",
+				"embeddedLanguages": {
+					"meta.embedded.block.sql": "sql"
+				}
+			}
+		]
+	}
+}

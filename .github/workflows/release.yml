@@ -155,7 +155,7 @@ jobs:
         with:
           name: vsix-package
 
-      - name: Publish to Open VSX
+      - name: Ensure namespace exists (idempotente)
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: |
@@ -163,6 +163,23 @@ jobs:
             echo "::error::Secret OVSX_PAT não configurado. Rode: gh secret set OVSX_PAT --repo asadriko/connectorx-lsp"
             exit 1
           fi
+          PUBLISHER=$(node -p "require('./package.json').publisher")
+          echo "Garantindo namespace Open VSX: $PUBLISHER"
+          # 'ovsx create-namespace' falha se já existir — tratamos como sucesso.
+          OUT=$(ovsx create-namespace "$PUBLISHER" -p "$OVSX_PAT" 2>&1) || true
+          echo "$OUT"
+          if echo "$OUT" | grep -qiE "(created|already exists|conflict)"; then
+            echo "✓ Namespace pronto"
+          elif [ -z "$OUT" ]; then
+            echo "✓ Namespace criado (saída vazia — comportamento normal do ovsx CLI em sucesso)"
+          else
+            echo "::warning::Saída inesperada do create-namespace. Tentando publish mesmo assim — se falhar, criar namespace manual."
+          fi
+
+      - name: Publish to Open VSX
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
           VSIX=$(ls *.vsix | tail -1)
           ovsx publish "$VSIX" -p "$OVSX_PAT"
           echo "::notice::Publicado em https://open-vsx.org/extension/adrianoazevedo/connectorx-lsp"
